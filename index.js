@@ -1,0 +1,40 @@
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+const db = require('./utils/db');
+
+const app = express();
+const {PORT} = require('./config');
+const {SECRET_KEY} = require('./config');
+
+//middleware for json body
+app.use(bodyParser.json());
+
+app.post('/login', (req, res) =>{
+    const {username, password} = req.body;
+    db.userExists(username)
+        .then(user =>{
+            const isPasswordValid = bcrypt.compareSync(password, user.password);
+            if (!isPasswordValid) return res.status(400).json({message: 'Invalid cedential'});
+            const token = jwt.sign({id: user.id}, SECRET_KEY, {expiresIn: '5h'});
+            return res.status(200).json({token});
+        })
+        .catch(err=>{
+            return res.status(400).json({message:"invalid credential"});
+        })
+})
+app.post('/validate', (req, res) =>{
+    const token = req.headers['authorization'];
+    if (!token) return res.status(401).json({message:'Unauthorized'});
+
+    jwt.verify(token, SECRET_KEY, (err, decoded) =>{
+        if (err) return res.status(401).json({message:err});
+        return res.status(200).json({message: 'OK', user: decoded});
+    })
+})
+app.listen(PORT, ()=>{
+    console.log(`Server running on port ${PORT}`);
+})
