@@ -9,6 +9,7 @@ const db = require('./utils/db');
 const app = express();
 const {PORT} = require('./config');
 const {SECRET_KEY} = require('./config');
+const {EXPIRE_TIME} = require('./config')
 
 //middleware for json body
 app.use(bodyParser.json());
@@ -19,7 +20,7 @@ app.post('/login', (req, res) =>{
         .then(user =>{
             const isPasswordValid = bcrypt.compareSync(password, user.password);
             if (!isPasswordValid) return res.status(400).json({message: 'Invalid cedential'});
-            const token = jwt.sign({id: user.id}, SECRET_KEY, {expiresIn: '5h'});
+            const token = jwt.sign({id: user.id}, SECRET_KEY, {expiresIn: EXPIRE_TIME});
             return res.status(200).json({token});
         })
         .catch(err=>{
