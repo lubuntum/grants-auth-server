@@ -14,7 +14,17 @@ function userExists(username){
     })
 }
 
+function getUserById(id) {
+    return new Promise((resolve, reject) => {
+        db.get(`SELECT username FROM users WHERE id = ?`, [id], (err, username) =>{
+            if(err || !username) reject(err);
+            resolve(username);
+        })
+    })
+}
+
 module.exports = {
     db,
-    userExists
+    userExists,
+    getUserById
 };
