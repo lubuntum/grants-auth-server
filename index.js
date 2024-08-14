@@ -1,18 +1,27 @@
+const {PORT} = require('./config');
+const {SECRET_KEY} = require('./config');
+const {EXPIRE_TIME} = require('./config')
+const {REACT_URL} = require('./config')
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const db = require('./utils/db');
 
 const app = express();
-const {PORT} = require('./config');
-const {SECRET_KEY} = require('./config');
-const {EXPIRE_TIME} = require('./config')
 
 //middleware for json body
 app.use(bodyParser.json());
+
+app.use(cors({
+    origin: REACT_URL,
+    methods: ['GET', 'POST'],
+    credentials: true
+}));
 
 app.post('/login', (req, res) =>{
     const {username, password} = req.body;
@@ -33,7 +42,14 @@ app.post('/validate', (req, res) =>{
 
     jwt.verify(token, SECRET_KEY, (err, decoded) =>{
         if (err) return res.status(401).json({message:err});
-        return res.status(200).json({message: 'OK', user: decoded});
+        db.getUserById(decoded.id)
+            .then(username =>{
+                return res.status(200).json({message: 'OK', credential: username})
+            })
+            .catch(err =>{
+                return res.status(400).json({message: err});
+            })
+        
     })
 })
 app.listen(PORT, ()=>{
